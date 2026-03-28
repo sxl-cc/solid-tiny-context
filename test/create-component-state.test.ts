@@ -1,9 +1,9 @@
-import { createRoot, createSignal } from 'solid-js';
-import { describe, expect, it } from 'vitest';
-import { createComponentState } from '../src';
+import { createRoot, createSignal } from "solid-js";
+import { describe, expect, it } from "vitest";
+import { createComponentState } from "../src";
 
-describe('Create component state', () => {
-  it('should create a component state', () => {
+describe("Create component state", () => {
+  it("should create a component state", () => {
     const context = createRoot(() => {
       return createComponentState({
         state: () => ({
@@ -20,7 +20,7 @@ describe('Create component state', () => {
     expect(context.initial).toBeDefined();
   });
 
-  it('should handle initial value', () => {
+  it("should handle initial value", () => {
     const [setC, setB, ctx] = createRoot(() => {
       const context = createComponentState({
         state: () => ({

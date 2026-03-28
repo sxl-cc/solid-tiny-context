@@ -6,18 +6,18 @@ import {
   createMemo,
   type JSX,
   useContext,
-} from 'solid-js';
-import { createStore } from 'solid-js/store';
-import { access, createWatch, isFn } from 'solid-tiny-utils';
+} from "solid-js";
+import { createStore } from "solid-js/store";
+import { access, createWatch, isFn } from "solid-tiny-utils";
 import type {
   Getters,
   MaybeSignals,
   Methods,
   RealContextThis,
   RealState,
-} from './types';
-import { isUndefined } from './utils/is';
-import type { EmptyObject, Fn } from './utils/types';
+} from "./types";
+import { isUndefined } from "./utils/is";
+import type { EmptyObject, Fn } from "./utils/types";
 
 /**
  * Add a getter to an object.
@@ -42,7 +42,7 @@ export function buildRealState<
 >(params: {
   state: () => T;
   nowrapData?: U;
-  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, 'actions'>>;
+  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
   methods?: M & ThisType<RealContextThis<T, U, G, M>>;
 }): [...RealState<T, G, M>, U] {
   const { state, getters, methods, nowrapData } = params;
@@ -73,7 +73,7 @@ export function buildRealState<
 
   // register methods
   for (const [key, methodFn] of Object.entries(methods || {})) {
-    if (typeof methodFn === 'function') {
+    if (typeof methodFn === "function") {
       actions[key] = (...args: unknown[]) =>
         batch(() =>
           methodFn.call({ state: state2, actions, nowrapData }, ...args)
@@ -95,7 +95,7 @@ export function buildContext<
 >(params: {
   state: () => T;
   nowrapData?: () => U;
-  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, 'actions'>>;
+  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
   methods?: M & ThisType<RealContextThis<T, U, G, M>>;
 }) {
   const context = createContext([{}, {}, {}] as [...RealState<T, G, M>, U]);
