@@ -1,9 +1,9 @@
-import { batch, createRoot } from 'solid-js';
-import { isServer } from 'solid-js/web';
-import { createDebouncedWatch } from 'solid-tiny-utils';
-import { buildRealState } from './base-context';
-import type { Getters, Methods, RealContextThis } from './types';
-import type { EmptyObject } from './utils/types';
+import { batch, createRoot } from "solid-js";
+import { isServer } from "solid-js/web";
+import { createDebouncedWatch } from "solid-tiny-utils";
+import { buildRealState } from "./base-context";
+import type { Getters, Methods, RealContextThis } from "./types";
+import type { EmptyObject } from "./utils/types";
 
 export function getBrowserApi<T extends keyof Window>(
   windowApi: T
@@ -14,17 +14,15 @@ export function getBrowserApi<T extends keyof Window>(
   return null;
 }
 
-const shouldRun: (() => void)[] = [];
-
 function setupPersistence<T extends object>(
   name: string,
   storage: Storage,
   state: T,
   actions: { setState: (...arg: unknown[]) => void }
 ) {
-  type Stored = {
+  interface Stored {
     state: Partial<T>;
-  };
+  }
 
   const write = (data: Partial<T>) => {
     const payload: Stored = { state: data };
@@ -65,7 +63,7 @@ function setupPersistence<T extends object>(
   );
 
   // 跨标签页同步
-  window.addEventListener('storage', (e) => {
+  window.addEventListener("storage", (e) => {
     if (e.key !== name || !e.newValue) {
       return;
     }
@@ -91,9 +89,9 @@ function defineGlobalStore<
   params: {
     state: () => T;
     nowrapData?: () => U;
-    getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, 'actions'>>;
+    getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
     methods?: M & ThisType<RealContextThis<T, U, G, M>>;
-    persist?: 'sessionStorage' | 'localStorage';
+    persist?: "sessionStorage" | "localStorage";
   }
 ) {
   return createRoot(() => {
@@ -103,7 +101,7 @@ function defineGlobalStore<
       const storage = getBrowserApi(params.persist);
       if (storage) {
         const [state, actions] = context;
-        shouldRun.push(() => setupPersistence(name, storage, state, actions));
+        setupPersistence(name, storage, state, actions);
       }
     }
 
@@ -111,17 +109,4 @@ function defineGlobalStore<
   });
 }
 
-/**
- * !only run once
- *
- * run after rendered is suggested
- */
-function enableGlobalStore() {
-  createRoot(() => {
-    for (const fn of shouldRun) {
-      fn();
-    }
-  });
-}
-
-export { defineGlobalStore, enableGlobalStore };
+export { defineGlobalStore };

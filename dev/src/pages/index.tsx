@@ -1,5 +1,5 @@
-import { createComponentState } from '../../create-component-state';
-import { Button } from '../components/Button';
+import { createComponentState } from "~/create-component-state";
+import { Button } from "./btn";
 
 const context = createComponentState({
   state: () => ({
@@ -12,7 +12,7 @@ const context = createComponentState({
   },
   methods: {
     incrementCount() {
-      this.actions.setState('count', (prev) => prev + 1);
+      this.actions.setState("count", (prev) => prev + 1);
     },
   },
 });
@@ -25,7 +25,7 @@ function InnerComponent() {
       <p>Count: {state.count}</p>
       <p>Double Count: {state.doubleCount}</p>
       <Button onClick={() => actions.incrementCount()}>Increment</Button>
-      <Button onClick={() => actions.setState('count', 0)}>Reset</Button>
+      <Button onClick={() => actions.setState("count", 0)}>Reset</Button>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export default function Index() {
         <h2>Double Count: {state.doubleCount}</h2>
         <Button
           onClick={() => {
-            actions.setState('count', (prev) => prev + 1);
+            actions.setState("count", (prev) => prev + 1);
           }}
         >
           Increment

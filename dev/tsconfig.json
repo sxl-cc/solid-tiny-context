@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "jsx": "preserve",
+    "lib": ["ES2022", "DOM"],
+    "jsxImportSource": "solid-js",
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "types": ["vite/client", "vite-plugin-solid-pages/client"],
+    "paths": {
+      "~/*": ["../src/*"],
+      "~play/*": ["./src/*"]
+    },
+    "strictNullChecks": true
+  },
+  "include": ["src/**/*", "../src/**/*"]
+}

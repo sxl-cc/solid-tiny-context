@@ -1,5 +1,5 @@
-import { useGlobalState } from '../..';
-import { Button } from '../../components/Button';
+import { useGlobalState } from "../..";
+import { Button } from "../../component/btn";
 
 export default function Index() {
   const [state, actions] = useGlobalState();
