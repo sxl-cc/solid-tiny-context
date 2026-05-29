@@ -8,15 +8,15 @@ import {
   useContext,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import { access, createWatch, isFn } from "solid-tiny-utils";
+import { access, createWatch, isFn, isUndefined } from "solid-tiny-utils";
 import type {
+  GetterContextThis,
   Getters,
   MaybeSignals,
   Methods,
   RealContextThis,
   RealState,
 } from "./types";
-import { isUndefined } from "./utils/is";
 import type { EmptyObject, Fn } from "./utils/types";
 
 /**
@@ -42,7 +42,7 @@ export function buildRealState<
 >(params: {
   state: () => T;
   nowrapData?: U;
-  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
+  getters?: G & ThisType<GetterContextThis<T, G>>;
   methods?: M & ThisType<RealContextThis<T, U, G, M>>;
 }): [...RealState<T, G, M>, U] {
   const { state, getters, methods, nowrapData } = params;
@@ -64,10 +64,7 @@ export function buildRealState<
   // register getters (merge createMemo)
   for (const [key, getterFn] of Object.entries(getters || {})) {
     realGetters[key] = createMemo((prev: unknown) =>
-      (getterFn as (p?: unknown) => unknown).call(
-        { state: state2, nowrapData },
-        prev
-      )
+      (getterFn as (p?: unknown) => unknown).call({ state: state2 }, prev)
     );
   }
 
@@ -95,13 +92,19 @@ export function buildContext<
 >(params: {
   state: () => T;
   nowrapData?: () => U;
-  getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
+  getters?: G & ThisType<GetterContextThis<T, G>>;
   methods?: M & ThisType<RealContextThis<T, U, G, M>>;
 }) {
-  const context = createContext([{}, {}, {}] as [...RealState<T, G, M>, U]);
+  const context = createContext<[...RealState<T, G, M>, U]>();
 
   const useThisContext = () => {
-    return useContext(context);
+    const value = useContext(context);
+    if (!value) {
+      throw new Error(
+        "createComponentState context is missing. Wrap the component with its Provider."
+      );
+    }
+    return value;
   };
 
   return {

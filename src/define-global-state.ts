@@ -2,7 +2,12 @@ import { batch, createRoot } from "solid-js";
 import { isServer } from "solid-js/web";
 import { createDebouncedWatch } from "solid-tiny-utils";
 import { buildRealState } from "./base-context";
-import type { Getters, Methods, RealContextThis } from "./types";
+import type {
+  GetterContextThis,
+  Getters,
+  Methods,
+  RealContextThis,
+} from "./types";
 import type { EmptyObject } from "./utils/types";
 
 export function getBrowserApi<T extends keyof Window>(
@@ -62,7 +67,7 @@ function setupPersistence<T extends object>(
     { delay: 200 }
   );
 
-  // 跨标签页同步
+  // Sync changes across browser tabs.
   window.addEventListener("storage", (e) => {
     if (e.key !== name || !e.newValue) {
       return;
@@ -89,13 +94,18 @@ function defineGlobalStore<
   params: {
     state: () => T;
     nowrapData?: () => U;
-    getters?: G & ThisType<Omit<RealContextThis<T, U, G, M>, "actions">>;
+    getters?: G & ThisType<GetterContextThis<T, G>>;
     methods?: M & ThisType<RealContextThis<T, U, G, M>>;
     persist?: "sessionStorage" | "localStorage";
   }
 ) {
   return createRoot(() => {
-    const context = buildRealState(params);
+    const context = buildRealState({
+      state: params.state,
+      nowrapData: params.nowrapData?.(),
+      getters: params.getters,
+      methods: params.methods,
+    });
 
     if (params.persist) {
       const storage = getBrowserApi(params.persist);

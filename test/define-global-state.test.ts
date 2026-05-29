@@ -2,13 +2,11 @@ import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineGlobalStore } from "../src";
 
-const createStoredStr = (state: object, ts?: number) => {
-  return JSON.stringify({ state, ts: ts || Date.now() });
-};
+const createStoredStr = (state: object, ts?: number) =>
+  JSON.stringify({ state, ts: ts || Date.now() });
 
-const getLocalStored = (name: string) => {
-  return JSON.parse(localStorage.getItem(name) || "{}").state;
-};
+const getLocalStored = (name: string) =>
+  JSON.parse(localStorage.getItem(name) || "{}").state;
 
 describe("Define global state", () => {
   beforeEach(() => {
@@ -21,14 +19,14 @@ describe("Define global state", () => {
   });
 
   it("should defined a global state", async () => {
-    const state = createRoot(() => {
-      return defineGlobalStore("test-state", {
+    const state = createRoot(() =>
+      defineGlobalStore("test-state", {
         state: () => ({
           count: 0,
         }),
         persist: "localStorage",
-      });
-    });
+      })
+    );
 
     // wait the effect debounce
     await vi.advanceTimersByTimeAsync(1000);
@@ -40,27 +38,27 @@ describe("Define global state", () => {
 
   it("should restore from storage correctly", () => {
     localStorage.setItem("test-state1", createStoredStr({ count: 1 }));
-    const context = createRoot(() => {
-      return defineGlobalStore("test-state1", {
+    const context = createRoot(() =>
+      defineGlobalStore("test-state1", {
         state: () => ({
           count: 0,
         }),
         persist: "localStorage",
-      });
-    });
+      })
+    );
     const [state] = context;
     expect(state.count).toBe(1);
   });
 
   it("should save to storage correctly", async () => {
-    const context = createRoot(() => {
-      return defineGlobalStore("test-state2", {
+    const context = createRoot(() =>
+      defineGlobalStore("test-state2", {
         state: () => ({
           count: 0,
         }),
         persist: "localStorage",
-      });
-    });
+      })
+    );
 
     const [, actions] = context;
     await vi.advanceTimersByTimeAsync(300);
@@ -84,14 +82,15 @@ describe("Define global state", () => {
   });
 
   it("should listen storage change", async () => {
-    const state = createRoot(() => {
-      return defineGlobalStore("test-state3", {
-        state: () => ({
-          count: 0,
-        }),
-        persist: "localStorage",
-      })[0];
-    });
+    const state = createRoot(
+      () =>
+        defineGlobalStore("test-state3", {
+          state: () => ({
+            count: 0,
+          }),
+          persist: "localStorage",
+        })[0]
+    );
     await vi.advanceTimersByTimeAsync(500);
     // simulate storage change
     window.dispatchEvent(
@@ -103,6 +102,40 @@ describe("Define global state", () => {
       })
     );
     await vi.advanceTimersByTimeAsync(500);
+    expect(state.count).toBe(2);
+  });
+
+  it("should expose nowrapData to methods but not getters", () => {
+    const context = createRoot(() =>
+      defineGlobalStore("test-state4", {
+        state: () => ({
+          count: 0,
+        }),
+        nowrapData: () => ({
+          step: 2,
+        }),
+        getters: {
+          getterNowrapData(): unknown {
+            // @ts-expect-error getters should not access nowrapData
+            return this.nowrapData;
+          },
+        },
+        methods: {
+          incrementByStep() {
+            this.actions.setState(
+              "count",
+              (prev) => prev + this.nowrapData.step
+            );
+          },
+        },
+      })
+    );
+
+    const [state, actions, nowrapData] = context;
+
+    expect(nowrapData).toEqual({ step: 2 });
+    expect(state.getterNowrapData).toBeUndefined();
+    actions.incrementByStep();
     expect(state.count).toBe(2);
   });
 });

@@ -41,11 +41,7 @@ export function useGlobalState() {
 
 render(
   () => (
-    <Router
-      root={(props) => {
-        return <Layout>{props.children}</Layout>;
-      }}
-    >
+    <Router root={(props) => <Layout>{props.children}</Layout>}>
       {routes}
     </Router>
   ),

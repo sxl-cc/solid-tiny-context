@@ -17,6 +17,10 @@ export type RealState<T, G extends Getters, M> = [
   Omit<M, "setState" | keyof G> & { setState: SetStoreFunction<T> },
 ];
 
+export interface GetterContextThis<T, G extends Getters> {
+  state: Readonly<T & GetterObj<G>>;
+}
+
 export interface Getters {
   // biome-ignore lint/suspicious/noExplicitAny: should be any
   [key: string]: (prev?: any) => any;

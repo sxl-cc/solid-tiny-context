@@ -1,16 +1,16 @@
 # solid-tiny-context
 
-A tiny, type-safe state management library for SolidJS with built-in persistence support.
+A tiny, type-safe state management library for SolidJS with component context,
+global stores, computed getters, methods, and optional persistence.
 
 ## Features
 
-- 🚀 **Lightweight**: Minimal bundle size with maximum functionality
-- 🔒 **Type-safe**: Full TypeScript support with excellent type inference
-- 🔄 **Reactive**: Built on SolidJS's reactive primitives
-- 💾 **Persistence**: Built-in localStorage/sessionStorage support
-- 🌐 **Cross-tab sync**: Automatic synchronization across browser tabs
-- 🎯 **Component & Global**: Support for both component-level and global state
-- 📦 **Zero dependencies**: Only peer dependency on solid-js
+- Lightweight SolidJS state helpers
+- Type-safe state, getters, and actions
+- Component-level context stores
+- Global stores with optional localStorage/sessionStorage persistence
+- Cross-tab synchronization for persisted stores
+- Automatic batching for custom methods
 
 ## Installation
 
@@ -22,18 +22,22 @@ pnpm add solid-tiny-context
 yarn add solid-tiny-context
 ```
 
+`solid-js` is a peer dependency. `solid-tiny-utils` is a runtime dependency.
+
 ## Quick Start
 
 ### Global State
 
 ```tsx
-import { defineGlobalStore, enableGlobalStore } from 'solid-tiny-context';
+import { defineGlobalStore } from "solid-tiny-context";
 
-// Define global state
-const globalState = defineGlobalStore('myApp', {
+const globalState = defineGlobalStore("myApp", {
   state: () => ({
     count: 0,
-    message: 'Hello, SolidJS!',
+    message: "Hello, SolidJS!",
+  }),
+  nowrapData: () => ({
+    step: 1,
   }),
   getters: {
     doubleCount() {
@@ -42,31 +46,25 @@ const globalState = defineGlobalStore('myApp', {
   },
   methods: {
     increment() {
-      this.actions.setState('count', (prev) => prev + 1);
+      this.actions.setState("count", (prev) => prev + this.nowrapData.step);
     },
     updateMessage(newMessage: string) {
-      this.actions.setState('message', newMessage);
+      this.actions.setState("message", newMessage);
     },
   },
-  persist: 'localStorage', // Optional: persist state
+  persist: "localStorage",
 });
 
-// Enable persistence (call once in your app)
-enableGlobalStore();
-
-// Use in components
 function Counter() {
   const [state, actions] = globalState;
-  
+
   return (
     <div>
       <p>Count: {state.count}</p>
       <p>Double: {state.doubleCount}</p>
       <p>Message: {state.message}</p>
-      <button onClick={() => actions.increment()}>
-        Increment
-      </button>
-      <button onClick={() => actions.updateMessage('Updated!')}>
+      <button onClick={() => actions.increment()}>Increment</button>
+      <button onClick={() => actions.updateMessage("Updated!")}>
         Update Message
       </button>
     </div>
@@ -74,30 +72,28 @@ function Counter() {
 }
 ```
 
-### Component State (Context)
+### Component State
 
 ```tsx
-import { createComponentState } from 'solid-tiny-context';
+import { createComponentState } from "solid-tiny-context";
 
-// Create context
 const counterContext = createComponentState({
   state: () => ({
     count: 0,
   }),
   methods: {
     increment() {
-      this.actions.setState('count', (prev) => prev + 1);
+      this.actions.setState("count", (prev) => prev + 1);
     },
     decrement() {
-      this.actions.setState('count', (prev) => prev - 1);
+      this.actions.setState("count", (prev) => prev - 1);
     },
   },
 });
 
-// Provider component
 function App() {
-  const context = counterContext.initial(); // Can pass initial state here
-  
+  const context = counterContext.initial({ count: 1 });
+
   return (
     <context.Provider>
       <Counter />
@@ -105,10 +101,9 @@ function App() {
   );
 }
 
-// Consumer component
 function Counter() {
   const [state, actions] = counterContext.useContext();
-  
+
   return (
     <div>
       <p>Count: {state.count}</p>
@@ -119,172 +114,59 @@ function Counter() {
 }
 ```
 
-## API Reference
+## API
 
 ### `defineGlobalStore(name, options)`
 
-Creates a global state store.
+Creates a global store and returns `[state, actions, nowrapData]`.
 
-#### Parameters
+Options:
 
-- `name` (string): Unique identifier for the store
-- `options` (object):
-  - `state` (() => T): Function returning initial state
-  - `getters?` (object): Computed values based on state
-  - `methods?` (object): Functions to modify state
-  - `nowrapData?` (object): Additional non-reactive data
-  - `persist?` ('localStorage' | 'sessionStorage'): Storage type for persistence
+- `state`: function returning the initial reactive state
+- `getters`: computed values that can read `this.state`
+- `methods`: actions that can read `this.state`, call `this.actions`, and access `this.nowrapData`
+- `nowrapData`: function returning non-reactive data for methods
+- `persist`: `"localStorage"` or `"sessionStorage"`
 
-#### Returns
-
-A tuple `[state, actions]` that can be used directly in components.
+Getters intentionally cannot access `nowrapData`. Keep getters derived only from
+reactive state so their dependencies stay explicit.
 
 ### `createComponentState(options)`
 
-Creates a component-level context.
+Creates a component context store.
 
-#### Parameters
+Returns:
 
-- `options` (object):
-  - `state` (() => T): Function returning initial state
-  - `getters?` (object): Computed values based on state
-  - `methods?` (object): Functions to modify state
-  - `nowrapData?` (() => U): Function returning additional non-reactive data
+- `useContext()`: reads `[state, actions, nowrapData]` from the nearest Provider
+- `initial(initialState?)`: creates a Provider and value tuple
+- `defaultValue`: the default state factory
 
-#### Returns
+`useContext()` throws if it is called outside the matching Provider.
 
-An object with:
-- `useContext()`: Hook to access state in child components
-- `initial(initialState?)`: Creates provider with optional initial state
-- `defaultValue`: Reference to the default state function
+## TypeScript
 
-### `enableGlobalStore()`
-
-Enables persistence features for global stores. Call once in your application root.
-
-## Advanced Usage
-
-### With Getters
+State, getters, and methods infer their types from the object passed to
+`defineGlobalStore` or `createComponentState`.
 
 ```tsx
-const store = defineGlobalStore('app', {
-  state: () => ({
-    users: [],
-    selectedUserId: null,
-  }),
-  getters: {
-    selectedUser() {
-      return this.state.users.find(u => u.id === this.state.selectedUserId);
-    },
-    userCount() {
-      return this.state.users.length;
-    },
-  },
-  methods: {
-    addUser(user) {
-      this.actions.setState('users', (users) => [...users, user]);
-    },
-    selectUser(id) {
-      this.actions.setState('selectedUserId', id);
-    },
-  },
-});
-```
-
-### With Initial State (Component Context)
-
-```tsx
-const context = createComponentState({
-  state: () => ({
-    theme: 'light',
-    language: 'en',
-  }),
-});
-
-// Pass reactive initial state
-function App() {
-  const [theme] = createSignal('dark');
-  
-  const provider = context.initial({
-    theme, // Reactive signal
-    language: 'es', // Static value
-  });
-  
-  return (
-    <provider.Provider>
-      <ThemeDisplay />
-    </provider.Provider>
-  );
-}
-```
-
-### Cross-tab Synchronization
-
-When using `persist` option, state automatically synchronizes across browser tabs:
-
-```tsx
-const settings = defineGlobalStore('settings', {
-  state: () => ({
-    theme: 'light',
-    notifications: true,
-  }),
-  persist: 'localStorage', // Enables cross-tab sync
-});
-
-// Changes in one tab will automatically reflect in other tabs
-```
-
-## TypeScript Support
-
-The library provides excellent TypeScript support with full type inference:
-
-```tsx
-const store = defineGlobalStore('typed', {
+const store = defineGlobalStore("typed", {
   state: () => ({
     count: 0,
-    message: 'hello',
   }),
   getters: {
-    formattedMessage() {
-      // `this.state` is fully typed
-      return this.state.message.toUpperCase();
+    formattedCount() {
+      return `Count: ${this.state.count}`;
     },
   },
   methods: {
     updateCount(newCount: number) {
-      // `this.actions.setState` is fully typed
-      this.actions.setState('count', newCount);
+      this.actions.setState("count", newCount);
     },
   },
 });
 
-// State and actions are fully typed
 const [state, actions] = store;
-// state.count -> number
-// state.message -> string  
-// state.formattedMessage -> string
-// actions.updateCount -> (newCount: number) => void
+
+state.formattedCount;
+actions.updateCount(1);
 ```
-
-## Best Practices
-
-1. **Use Global State Sparingly**: Reserve global state for truly global data (user auth, app settings, etc.)
-
-2. **Prefer Component Context**: For feature-specific state, use component contexts for better encapsulation
-
-3. **Keep State Flat**: Avoid deeply nested state structures for better performance
-
-4. **Use Getters for Computed Values**: Instead of storing derived data, use getters
-
-5. **Batch Updates**: The library automatically batches updates in methods
-
-## Performance
-
-- Built on SolidJS's fine-grained reactivity
-- Only components using specific state properties re-render
-- Automatic batching of state updates
-- Minimal bundle size impact
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

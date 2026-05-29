@@ -4,19 +4,21 @@ import { createComponentState } from "../src";
 
 describe("Create component state", () => {
   it("should create a component state", () => {
-    const context = createRoot(() => {
-      return createComponentState({
+    const context = createRoot(() =>
+      createComponentState({
         state: () => ({
           count: 0,
         }),
-      });
-    });
+      })
+    );
 
     expect(context).toBeDefined();
     expect(context.defaultValue()).toEqual({
       count: 0,
     });
-    expect(context.useContext()).toBeDefined();
+    expect(() => context.useContext()).toThrow(
+      "createComponentState context is missing."
+    );
     expect(context.initial).toBeDefined();
   });
 

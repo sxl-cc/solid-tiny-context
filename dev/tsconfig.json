@@ -4,7 +4,6 @@
     "jsx": "preserve",
     "lib": ["ES2022", "DOM"],
     "jsxImportSource": "solid-js",
-    "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
